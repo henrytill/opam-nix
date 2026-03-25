@@ -129,15 +129,28 @@ let
 
     coq = oa: {
       setupHook = final.nixpkgs.writeText "setupHook.sh" (
-        ''
-          addCoqPath () {
-            if test -d "$1/lib/coq/${oa.version}/user-contrib"; then
-              export COQPATH="''${COQPATH-}''${COQPATH:+:}$1/lib/coq/${oa.version}/user-contrib/"
-            fi
-          }
+        (
+          if lib.versionAtLeast oa.version "9.0.0" then
+            ''
+              addRocqPath () {
+                if test -d "$1/lib/coq/${oa.version}/user-contrib"; then
+                  export ROCQPATH="''${ROCQPATH-}''${ROCQPATH:+:}$1/lib/coq/${oa.version}/user-contrib/"
+                fi
+              }
 
-          addEnvHooks "$targetOffset" addCoqPath
+              addEnvHooks "$targetOffset" addRocqPath
+            ''
+          else
+            ''
+              addCoqPath () {
+                if test -d "$1/lib/coq/${oa.version}/user-contrib"; then
+                  export COQPATH="''${COQPATH-}''${COQPATH:+:}$1/lib/coq/${oa.version}/user-contrib/"
+                fi
+              }
 
+              addEnvHooks "$targetOffset" addCoqPath
+            ''
+        ) + ''
           # Note that $out refers to the output of a dependent package, not coq itself
           export DESTDIR="$out/lib/coq/${oa.version}"
           export COQLIBINSTALL="$out/lib/coq/${oa.version}/user-contrib"
@@ -191,13 +204,13 @@ let
     rocq-prover = oa: {
       setupHook = final.nixpkgs.writeText "setupHook.sh" (
         ''
-          addCoqPath () {
+          addRocqPath () {
             if test -d "$1/lib/coq/${oa.version}/user-contrib"; then
-              export COQPATH="''${COQPATH-}''${COQPATH:+:}$1/lib/coq/${oa.version}/user-contrib/"
+              export ROCQPATH="''${ROCQPATH-}''${ROCQPATH:+:}$1/lib/coq/${oa.version}/user-contrib/"
             fi
           }
 
-          addEnvHooks "$targetOffset" addCoqPath
+          addEnvHooks "$targetOffset" addRocqPath
 
           # Note that $out refers to the output of a dependent package, not coq itself
           export DESTDIR="$out/lib/coq/${oa.version}"
